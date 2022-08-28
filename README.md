@@ -13,6 +13,8 @@ Note: It can be run on any machine with access to Proxmox and Terraform Installe
 
 ## Preparation
 
+Note: This method requires an ubuntu vm template with docker installed and accessible to the user ubuntu as non-root command.
+To create a compatible vm programtically refer to [proxmox-ubuntu-vm-template](https://github.com/prashantsolanki3/proxmox-ubuntu-vm-template)
 - Create env.tfvars (in the same directory as main.tf)
 
 ```
