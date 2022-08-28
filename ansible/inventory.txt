@@ -1,0 +1,9 @@
+[docker_manager]
+ip1
+ip2
+ip3
+
+
+[docker_worker]
+ip1
+ip2

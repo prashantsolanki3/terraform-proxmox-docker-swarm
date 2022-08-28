@@ -1,0 +1,63 @@
+---
+- hosts: docker_manager
+  become: true
+
+  tasks:
+    - name: Install aptitude
+      apt:
+        name: aptitude
+        state: latest
+        update_cache: true
+
+    - name: Install required system packages
+      apt:
+        pkg:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - software-properties-common
+          - python3-pip
+          - virtualenv
+          - python3-setuptools
+        state: latest
+        update_cache: true
+
+    - name: Add Docker GPG apt Key
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+
+    - name: Add Docker Repository
+      apt_repository:
+        repo: deb https://download.docker.com/linux/ubuntu focal stable
+        state: present
+
+    - name: Update apt and install docker-ce
+      apt:
+        name: docker-ce
+        state: latest
+        update_cache: true
+
+    - name: Install Docker Module for Python
+      pip:
+        name: docker
+
+    # - name: Ensure group "docker" exists with correct gid
+    #   ansible.builtin.group:
+    #     name: docker
+    #     state: present
+    #     gid: 1000
+
+    - name: Adding docker group to ubuntu user
+      user: name=ubuntu
+        groups=docker
+        append=yes
+
+    - name: Refresh user Groups
+      shell: newgrp docker &
+
+  handlers:
+    - name: restart docker
+      service:
+        name: docker
+        state: restarted
