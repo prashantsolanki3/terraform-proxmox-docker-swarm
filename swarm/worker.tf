@@ -72,7 +72,7 @@ resource "proxmox_vm_qemu" "docker_worker" {
   provisioner "remote-exec" {
     inline = [
       "date",
-      "sleep 90",
+      "sleep 20",
     ]
   }
 
@@ -88,6 +88,32 @@ resource "proxmox_vm_qemu" "docker_worker" {
   provisioner "local-exec" {
     command = "rsync -e 'ssh -o stricthostkeychecking=no' ./.docker-swarm-worker-join-token ${var.admin_user}@${var.docker_worker_ipv4_range}${count.index + var.docker_worker_range_offset}:~/docker-swarm-worker-join-token"
   }
+
+  # Copy run-as-sudo.sh
+  provisioner "local-exec" {
+    command = "rsync -e 'ssh -o stricthostkeychecking=no' ./run-as-sudo.sh ${var.admin_user}@${var.docker_worker_ipv4_range}${count.index + var.docker_worker_range_offset}:~/run-as-sudo.sh"
+  }
+
+  # Copy firstboot.sh 
+  provisioner "local-exec" {
+    command = "rsync -e 'ssh -o stricthostkeychecking=no' ./firstboot.sh ${var.admin_user}@${var.docker_worker_ipv4_range}${count.index + var.docker_worker_range_offset}:~/firstboot.sh"
+  }
+
+  # Copy .env 
+  provisioner "local-exec" {
+    command = "rsync -e 'ssh -o stricthostkeychecking=no' ./.env ${var.admin_user}@${var.docker_worker_ipv4_range}${count.index + var.docker_worker_range_offset}:~/.env"
+  }
+
+  # CHMOD firstboot.sh and execute
+  provisioner "remote-exec" {
+    inline = [
+      "chmod +x ~/firstboot.sh",
+      "chmod +x ~/run-as-sudo.sh",
+      "~/run-as-sudo.sh 2>&1 | tee  run-as-sudo.output",
+      # "rm -f ~/docker-swarm-worker-join-token"
+    ]
+  }
+
 
   # Join Docker Swarm
   provisioner "remote-exec" {

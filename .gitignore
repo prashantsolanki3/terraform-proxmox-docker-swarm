@@ -38,6 +38,7 @@ override.tf.json
 terraform.rc
 
 # 
+.env
 *.env.*
 .docker-*-join-token
 # End of https://www.toptal.com/developers/gitignore/api/terraform

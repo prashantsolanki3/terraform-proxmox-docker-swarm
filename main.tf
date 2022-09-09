@@ -1,0 +1,24 @@
+module "docker_swarm" {
+  source                         = "./swarm"
+  TARGET_NODE                    = var.TARGET_NODE
+  public_key_file                = var.public_key_file
+  private_key_file               = var.private_key_file
+  template                       = var.template
+  admin_password                 = var.admin_password
+  admin_user                     = var.admin_user
+  docker_manager_count           = var.docker_manager_count
+  docker_worker_count            = var.docker_worker_count
+  docker_manager_cpu_count       = var.docker_manager_cpu_count
+  docker_worker_cpu_count        = var.docker_worker_cpu_count
+  docker_manager_memory          = var.docker_manager_memory
+  docker_worker_memory           = var.docker_worker_memory
+  docker_manager_hostname        = var.docker_manager_hostname
+  docker_worker_hostname         = var.docker_worker_hostname
+  ipv4_gateway                   = var.ipv4_gateway
+  docker_manager_ipv4_range      = var.docker_manager_ipv4_range
+  docker_manager_data_ipv4_range = var.docker_manager_data_ipv4_range
+  docker_worker_data_ipv4_range  = var.docker_worker_data_ipv4_range
+  docker_worker_ipv4_range       = var.docker_worker_ipv4_range
+  docker_manager_range_offset    = var.docker_manager_range_offset
+  docker_worker_range_offset     = var.docker_worker_range_offset
+}

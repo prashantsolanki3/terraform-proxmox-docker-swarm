@@ -66,8 +66,7 @@ resource "proxmox_vm_qemu" "docker_manager" {
   provisioner "remote-exec" {
     inline = [
       "date",
-      # To allow the firstboot.sh script
-      "sleep 90"
+      "sleep 20"
     ]
   }
 
@@ -119,6 +118,31 @@ resource "proxmox_vm_qemu" "docker_manager" {
   # Copy Manager Join token from host to VM on manager2+.
   provisioner "local-exec" {
     command = var.docker_manager_count - count.index < var.docker_manager_count ? "rsync -e 'ssh -o stricthostkeychecking=no' ./.docker-swarm-manager-join-token ${var.admin_user}@${var.docker_manager_ipv4_range}${count.index + var.docker_manager_range_offset}:~/docker-swarm-manager-join-token" : "echo \"Copy Manager Join token from host to VM on VM1+\""
+  }
+
+  # Copy run-as-sudo.sh
+  provisioner "local-exec" {
+    command = "rsync -e 'ssh -o stricthostkeychecking=no' ./run-as-sudo.sh ${var.admin_user}@${var.docker_manager_ipv4_range}${count.index + var.docker_manager_range_offset}:~/run-as-sudo.sh"
+  }
+
+  # Copy firstboot.sh 
+  provisioner "local-exec" {
+    command = "rsync -e 'ssh -o stricthostkeychecking=no' ./firstboot.sh ${var.admin_user}@${var.docker_manager_ipv4_range}${count.index + var.docker_manager_range_offset}:~/firstboot.sh"
+  }
+
+  # Copy .env 
+  provisioner "local-exec" {
+    command = "rsync -e 'ssh -o stricthostkeychecking=no' ./.env ${var.admin_user}@${var.docker_manager_ipv4_range}${count.index + var.docker_manager_range_offset}:~/.env"
+  }
+
+  # CHMOD firstboot.sh and execute
+  provisioner "remote-exec" {
+    inline = [
+      "chmod +x ~/firstboot.sh",
+      "chmod +x ~/run-as-sudo.sh",
+      "~/run-as-sudo.sh 2>&1 | tee  run-as-sudo.output",
+      # "rm -f ~/docker-swarm-worker-join-token"
+    ]
   }
 
   # Join Docker Swarm

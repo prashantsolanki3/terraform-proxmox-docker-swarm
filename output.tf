@@ -1,6 +1,6 @@
 # generate inventory file for Ansible
 resource "local_file" "hosts_cfg" {
-  depends_on = [proxmox_vm_qemu.docker_worker]
+  depends_on = [module.docker_swarm]
 
   content = templatefile("${path.module}/templates/hosts.tpl",
     {
