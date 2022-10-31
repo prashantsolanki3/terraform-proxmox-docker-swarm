@@ -1,6 +1,6 @@
-variable "TARGET_NODE" {
-  description = "TARGET_NODE"
-  type        = string
+variable "TARGET_NODES" {
+  description = "TARGET_NODES"
+  type        = list(string)
 }
 
 variable "public_key_file" {
@@ -118,4 +118,29 @@ variable "docker_worker_range_offset" {
   description = "The offset appended to the ipv4 range. e.g. if range=10.2.1.10 and docker_worker_range_offset=2 the resultant VM would have a IPs in the range of 10.2.1.102-10.2.1.109"
   type        = number
   default     = 5
+}
+
+
+variable "docker_worker_disk_size" {
+  description = "Disk size of docker workers"
+  type        = string
+  default     = "64G"
+}
+
+variable "docker_manager_disk_size" {
+  description = "Disk size of docker workers"
+  type        = string
+  default     = "64G"
+}
+
+variable "docker_manager_disk_storage" {
+  description = "storage location of docker manager disk"
+  type        = string
+  default     = "local-lvm"
+}
+
+variable "docker_worker_disk_storage" {
+  description = "storage location of docker worker disk"
+  type        = string
+  default     = "local-lvm"
 }

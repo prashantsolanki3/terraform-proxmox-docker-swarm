@@ -1,1 +1,1 @@
-sudo ./firstboot.sh 2>&1 | tee firstboot.output
+sudo $1 2>&1 | tee $1.output

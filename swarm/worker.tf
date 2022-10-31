@@ -1,7 +1,7 @@
 resource "proxmox_vm_qemu" "docker_worker" {
   count       = var.docker_worker_count
   name        = "${var.docker_worker_hostname}${count.index + 1}"
-  target_node = var.TARGET_NODE
+  target_node = var.TARGET_NODES[count.index % length(var.TARGET_NODES)]
 
   vmid     = "1900${count.index + 1}"
   clone    = var.template
@@ -16,9 +16,9 @@ resource "proxmox_vm_qemu" "docker_worker" {
 
   disk {
     slot     = 0
-    size     = "16G"
+    size     = var.docker_worker_disk_size
     type     = "scsi"
-    storage  = "fast"
+    storage  = var.docker_worker_disk_storage
     iothread = 1
   }
 
@@ -76,19 +76,6 @@ resource "proxmox_vm_qemu" "docker_worker" {
     ]
   }
 
-  # provisioner "local-exec" {
-  #   command = "ansible-playbook -i ${var.docker_worker_ipv4_range}${count.index + var.docker_worker_range_offset}, ansible/playbook.yml -u ${var.admin_user}"
-  # }
-
-  # Remove Existing ssh fingerprint
-  provisioner "local-exec" {
-    command = "ssh-keygen -f ~/.ssh/known_hosts -R \"${var.docker_worker_ipv4_range}${count.index + var.docker_worker_range_offset}\""
-  }
-  # Copy Docker Swarm CMD 
-  provisioner "local-exec" {
-    command = "rsync -e 'ssh -o stricthostkeychecking=no' ./.docker-swarm-worker-join-token ${var.admin_user}@${var.docker_worker_ipv4_range}${count.index + var.docker_worker_range_offset}:~/docker-swarm-worker-join-token"
-  }
-
   # Copy run-as-sudo.sh
   provisioner "local-exec" {
     command = "rsync -e 'ssh -o stricthostkeychecking=no' ./run-as-sudo.sh ${var.admin_user}@${var.docker_worker_ipv4_range}${count.index + var.docker_worker_range_offset}:~/run-as-sudo.sh"
@@ -109,10 +96,25 @@ resource "proxmox_vm_qemu" "docker_worker" {
     inline = [
       "chmod +x ~/firstboot.sh",
       "chmod +x ~/run-as-sudo.sh",
-      "~/run-as-sudo.sh 2>&1 | tee  run-as-sudo.output",
+      "~/run-as-sudo.sh ~/firstboot.sh 2>&1 | tee  run-as-sudo.output",
       # "rm -f ~/docker-swarm-worker-join-token"
     ]
   }
+
+  # provisioner "local-exec" {
+  #   command = "ansible-playbook -i ${var.docker_worker_ipv4_range}${count.index + var.docker_worker_range_offset}, ansible/playbook.yml -u ${var.admin_user}"
+  # }
+
+  # Remove Existing ssh fingerprint
+  provisioner "local-exec" {
+    command = "ssh-keygen -f ~/.ssh/known_hosts -R \"${var.docker_worker_ipv4_range}${count.index + var.docker_worker_range_offset}\""
+  }
+  # Copy Docker Swarm CMD 
+  provisioner "local-exec" {
+    command = "rsync -e 'ssh -o stricthostkeychecking=no' ./.docker-swarm-worker-join-token ${var.admin_user}@${var.docker_worker_ipv4_range}${count.index + var.docker_worker_range_offset}:~/docker-swarm-worker-join-token"
+  }
+
+
 
 
   # Join Docker Swarm

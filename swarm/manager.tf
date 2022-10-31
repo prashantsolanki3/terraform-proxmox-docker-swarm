@@ -1,7 +1,7 @@
 resource "proxmox_vm_qemu" "docker_manager" {
   count       = var.docker_manager_count
   name        = "${var.docker_manager_hostname}${count.index + 1}"
-  target_node = var.TARGET_NODE
+  target_node = var.TARGET_NODES[count.index % length(var.TARGET_NODES)]
 
   vmid     = "1800${count.index + 1}"
   clone    = var.template
@@ -16,7 +16,16 @@ resource "proxmox_vm_qemu" "docker_manager" {
 
   disk {
     slot     = 0
-    size     = "16G"
+    size     = var.docker_manager_disk_size
+    type     = "scsi"
+    storage  = var.docker_manager_disk_storage
+    iothread = 1
+  }
+
+  # SSD for transcoding
+  disk {
+    slot     = 1
+    size     = count.index == 0 ? var.docker_manager_disk_size : "1G"
     type     = "scsi"
     storage  = "fast"
     iothread = 1
@@ -70,6 +79,38 @@ resource "proxmox_vm_qemu" "docker_manager" {
     ]
   }
 
+  # Copy run-as-sudo.sh
+  provisioner "local-exec" {
+    command = "rsync -e 'ssh -o stricthostkeychecking=no' ./run-as-sudo.sh ${var.admin_user}@${var.docker_manager_ipv4_range}${count.index + var.docker_manager_range_offset}:~/run-as-sudo.sh"
+  }
+
+  # Copy firstboot.sh 
+  provisioner "local-exec" {
+    command = "rsync -e 'ssh -o stricthostkeychecking=no' ./firstboot.sh ${var.admin_user}@${var.docker_manager_ipv4_range}${count.index + var.docker_manager_range_offset}:~/firstboot.sh"
+  }
+
+  # Copy nvidia-driver-install.sh 
+  provisioner "local-exec" {
+    command = "rsync -e 'ssh -o stricthostkeychecking=no' ./nvidia-driver-install.sh ${var.admin_user}@${var.docker_manager_ipv4_range}${count.index + var.docker_manager_range_offset}:~/nvidia-driver-install.sh"
+  }
+
+  # Copy .env 
+  provisioner "local-exec" {
+    command = "rsync -e 'ssh -o stricthostkeychecking=no' ./.env ${var.admin_user}@${var.docker_manager_ipv4_range}${count.index + var.docker_manager_range_offset}:~/.env"
+  }
+
+  # CHMOD firstboot.sh and execute
+  provisioner "remote-exec" {
+    inline = [
+      "chmod +x ~/firstboot.sh",
+      "chmod +x ~/run-as-sudo.sh",
+      "chmod +x ~/nvidia-driver-install.sh",
+      "~/run-as-sudo.sh ~/firstboot.sh 2>&1 | tee  run-as-sudo.output",
+      # "rm -f ~/docker-swarm-worker-join-token"
+    ]
+  }
+
+
   # Do not remove the "," after the ip address.
   # provisioner "local-exec" {
   #   command = "ansible-playbook -i ${var.docker_manager_ipv4_range}${count.index + var.docker_manager_range_offset}, ./ansible/playbook.yml -u ${var.admin_user}"
@@ -120,29 +161,10 @@ resource "proxmox_vm_qemu" "docker_manager" {
     command = var.docker_manager_count - count.index < var.docker_manager_count ? "rsync -e 'ssh -o stricthostkeychecking=no' ./.docker-swarm-manager-join-token ${var.admin_user}@${var.docker_manager_ipv4_range}${count.index + var.docker_manager_range_offset}:~/docker-swarm-manager-join-token" : "echo \"Copy Manager Join token from host to VM on VM1+\""
   }
 
-  # Copy run-as-sudo.sh
-  provisioner "local-exec" {
-    command = "rsync -e 'ssh -o stricthostkeychecking=no' ./run-as-sudo.sh ${var.admin_user}@${var.docker_manager_ipv4_range}${count.index + var.docker_manager_range_offset}:~/run-as-sudo.sh"
-  }
-
-  # Copy firstboot.sh 
-  provisioner "local-exec" {
-    command = "rsync -e 'ssh -o stricthostkeychecking=no' ./firstboot.sh ${var.admin_user}@${var.docker_manager_ipv4_range}${count.index + var.docker_manager_range_offset}:~/firstboot.sh"
-  }
-
-  # Copy .env 
-  provisioner "local-exec" {
-    command = "rsync -e 'ssh -o stricthostkeychecking=no' ./.env ${var.admin_user}@${var.docker_manager_ipv4_range}${count.index + var.docker_manager_range_offset}:~/.env"
-  }
-
-  # CHMOD firstboot.sh and execute
   provisioner "remote-exec" {
-    inline = [
-      "chmod +x ~/firstboot.sh",
-      "chmod +x ~/run-as-sudo.sh",
-      "~/run-as-sudo.sh 2>&1 | tee  run-as-sudo.output",
-      # "rm -f ~/docker-swarm-worker-join-token"
-    ]
+    inline = count.index == 0 ? [
+      "echo \"Copied Join Tokens\""
+    ] : ["sleep 20"]
   }
 
   # Join Docker Swarm
@@ -155,6 +177,14 @@ resource "proxmox_vm_qemu" "docker_manager" {
       ] : ["echo \"count: ${var.docker_manager_count}\"",
       "rm -f ~/docker-swarm-manager-join-token"
     ]
+  }
+
+  # Install NVIDIA DRIVERS on Manager-1
+  provisioner "remote-exec" {
+    inline = count.index == 0 ? [
+      "~/run-as-sudo.sh ~/nvidia-driver-install.sh 2>&1 | tee  sudo-nvidia.output",
+      "echo \"Nvidia Drivers Installed\""
+    ] : ["echo \"Nvidia Drivers Not Installed\""]
   }
 
 }

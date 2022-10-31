@@ -1,6 +1,7 @@
 module "docker_swarm" {
+  count                          = var.test_only == true ? 0 : 1
   source                         = "./swarm"
-  TARGET_NODE                    = var.TARGET_NODE
+  TARGET_NODES                   = var.TARGET_NODES
   public_key_file                = var.public_key_file
   private_key_file               = var.private_key_file
   template                       = var.template
@@ -21,4 +22,24 @@ module "docker_swarm" {
   docker_worker_ipv4_range       = var.docker_worker_ipv4_range
   docker_manager_range_offset    = var.docker_manager_range_offset
   docker_worker_range_offset     = var.docker_worker_range_offset
+  docker_worker_disk_size        = var.docker_worker_disk_size
+  docker_worker_disk_storage     = var.docker_worker_disk_storage
+  docker_manager_disk_size       = var.docker_manager_disk_size
+  docker_manager_disk_storage    = var.docker_manager_disk_storage
+}
+
+
+module "test_vm" {
+  count                = var.test_only == true ? 1 : 0
+  source               = "./test-vm"
+  ipv4_gateway         = var.ipv4_gateway
+  TARGET_NODES         = var.TARGET_NODES
+  admin_user           = var.admin_user
+  admin_password       = var.admin_password
+  template             = var.template
+  test_vm_ip2          = "192.168.1.111"
+  test_vm_ip           = "172.16.1.111"
+  private_key_file     = var.private_key_file
+  public_key_file      = var.public_key_file
+  test_vm_disk_storage = "local-lvm"
 }

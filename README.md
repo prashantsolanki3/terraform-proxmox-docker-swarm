@@ -56,6 +56,11 @@ WARNING: This would actually update the resources on Proxmox.
 ```
 terraform apply -var-file="env.tfvars"
 ```
+- Destroy the VMs
+
+```
+terraform destroy -var-file="env.tfvars"
+```
 
 ### Network Config
 
