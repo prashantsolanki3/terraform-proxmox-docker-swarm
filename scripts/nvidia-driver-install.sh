@@ -10,9 +10,27 @@ distribution=$(. /etc/os-release;echo $ID$VERSION_ID) \
 apt-get update
 apt-get upgrade -y
 apt-get install -y nvidia-driver-515-server nvidia-docker2
-systemctl restart docker
-# reboot
 
+# GPU_ID=$(nvidia-smi -a | grep UUID | awk '{print substr($4,0,12)}')
+GPU_ID=GPU-3d7eaaf5
+cat << EOF > /etc/docker/daemon.json
+{ 
+  "runtimes": { 
+    "nvidia": { 
+      "path": "/usr/bin/nvidia-container-runtime", 
+      "runtimeArgs": [] 
+    } 
+  }, 
+  "default-runtime": "nvidia", 
+  "node-generic-resources": [ 
+    "NVIDIA-GPU=$GPU_ID" 
+    ] 
+}
+EOF
+
+echo "swarm-resource = \"DOCKER_RESOURCE_GPU\"" >> /etc/nvidia-container-runtime/config.toml
+
+systemctl restart docker
 
 
 

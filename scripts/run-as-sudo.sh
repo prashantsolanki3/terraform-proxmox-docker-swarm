@@ -1,0 +1,1 @@
+sudo /bin/bash -x $1 2>&1 | tee $1.sudo.log

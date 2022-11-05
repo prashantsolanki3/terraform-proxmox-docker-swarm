@@ -133,6 +133,12 @@ variable "docker_manager_disk_size" {
   default     = "64G"
 }
 
+variable "docker_manager_disk_size_secondary" {
+  description = "Disk size of docker the secondary disk for docker managers. Used for transcoding."
+  type        = string
+  default     = "16G"
+}
+
 variable "docker_manager_disk_storage" {
   description = "storage location of docker manager disk"
   type        = string

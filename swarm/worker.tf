@@ -57,46 +57,44 @@ resource "proxmox_vm_qemu" "docker_worker" {
     password    = var.admin_password
     private_key = file(var.private_key_file)
     host        = "${var.docker_worker_ipv4_range}${count.index + var.docker_worker_range_offset}"
-    insecure    = true
   }
 
-  # Install Docker
-  # provisioner "remote-exec" {
-  #   inline = [
-  #     "curl -fsSL https://get.docker.com -o get-docker.sh",
-  #     "sh ./get-docker.sh"
-  #   ]
-  # }
 
   # This helps to wait and test connection before executing local commands.
   provisioner "remote-exec" {
     inline = [
       "date",
-      "sleep 20",
+      "sleep 20"
     ]
   }
 
   # Copy run-as-sudo.sh
   provisioner "local-exec" {
-    command = "rsync -e 'ssh -o stricthostkeychecking=no' ./run-as-sudo.sh ${var.admin_user}@${var.docker_worker_ipv4_range}${count.index + var.docker_worker_range_offset}:~/run-as-sudo.sh"
+    command = "rsync -e 'ssh -o stricthostkeychecking=no' ./scripts/run-as-sudo.sh ${var.admin_user}@${var.docker_worker_ipv4_range}${count.index + var.docker_worker_range_offset}:/tmp/run-as-sudo.sh"
   }
 
   # Copy firstboot.sh 
   provisioner "local-exec" {
-    command = "rsync -e 'ssh -o stricthostkeychecking=no' ./firstboot.sh ${var.admin_user}@${var.docker_worker_ipv4_range}${count.index + var.docker_worker_range_offset}:~/firstboot.sh"
+    command = "rsync -e 'ssh -o stricthostkeychecking=no' ./scripts/firstboot.sh ${var.admin_user}@${var.docker_worker_ipv4_range}${count.index + var.docker_worker_range_offset}:/tmp/firstboot.sh"
   }
 
   # Copy .env 
   provisioner "local-exec" {
-    command = "rsync -e 'ssh -o stricthostkeychecking=no' ./.env ${var.admin_user}@${var.docker_worker_ipv4_range}${count.index + var.docker_worker_range_offset}:~/.env"
+    command = "rsync -e 'ssh -o stricthostkeychecking=no' ./.env ${var.admin_user}@${var.docker_worker_ipv4_range}${count.index + var.docker_worker_range_offset}:/tmp/.env"
+  }
+
+  # Copy cleanup.sh
+  provisioner "local-exec" {
+    command = "rsync -e 'ssh -o stricthostkeychecking=no' ./scripts/cleanup.sh ${var.admin_user}@${var.docker_manager_ipv4_range}${count.index + var.docker_manager_range_offset}:/tmp/cleanup.sh"
   }
 
   # CHMOD firstboot.sh and execute
   provisioner "remote-exec" {
     inline = [
-      "chmod +x ~/firstboot.sh",
-      "chmod +x ~/run-as-sudo.sh",
-      "~/run-as-sudo.sh ~/firstboot.sh 2>&1 | tee  run-as-sudo.output",
+      "chmod +x /tmp/firstboot.sh",
+      "chmod +x /tmp/run-as-sudo.sh",
+      "chmod +x /tmp/cleanup.sh",
+      "/tmp/run-as-sudo.sh /tmp/firstboot.sh",
       # "rm -f ~/docker-swarm-worker-join-token"
     ]
   }
@@ -111,7 +109,7 @@ resource "proxmox_vm_qemu" "docker_worker" {
   }
   # Copy Docker Swarm CMD 
   provisioner "local-exec" {
-    command = "rsync -e 'ssh -o stricthostkeychecking=no' ./.docker-swarm-worker-join-token ${var.admin_user}@${var.docker_worker_ipv4_range}${count.index + var.docker_worker_range_offset}:~/docker-swarm-worker-join-token"
+    command = "rsync -e 'ssh -o stricthostkeychecking=no' ./tokens/.docker-swarm-worker-join-token ${var.admin_user}@${var.docker_worker_ipv4_range}${count.index + var.docker_worker_range_offset}:/tmp/docker-swarm-worker-join-token"
   }
 
 
@@ -120,9 +118,8 @@ resource "proxmox_vm_qemu" "docker_worker" {
   # Join Docker Swarm
   provisioner "remote-exec" {
     inline = [
-      "chmod +x ~/docker-swarm-worker-join-token",
-      "~/docker-swarm-worker-join-token",
-      "rm -f ~/docker-swarm-worker-join-token"
+      "chmod +x /tmp/docker-swarm-worker-join-token",
+      "/tmp/docker-swarm-worker-join-token"
     ]
   }
 
