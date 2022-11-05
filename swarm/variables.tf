@@ -139,6 +139,12 @@ variable "docker_manager_disk_size_secondary" {
   default     = "16G"
 }
 
+variable "run_on_boot" {
+  description = "Run VM on Host startup"
+  type        = bool
+  default     = true
+}
+
 variable "docker_manager_disk_storage" {
   description = "storage location of docker manager disk"
   type        = string

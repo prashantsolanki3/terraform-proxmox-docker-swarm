@@ -2,6 +2,7 @@ resource "proxmox_vm_qemu" "docker_manager" {
   count       = var.docker_manager_count
   name        = "${var.docker_manager_hostname}${count.index + 1}"
   target_node = var.TARGET_NODES[count.index % length(var.TARGET_NODES)]
+  onboot      = var.run_on_boot
 
   vmid     = "1800${count.index + 1}"
   clone    = var.template

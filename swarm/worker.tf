@@ -2,17 +2,17 @@ resource "proxmox_vm_qemu" "docker_worker" {
   count       = var.docker_worker_count
   name        = "${var.docker_worker_hostname}${count.index + 1}"
   target_node = var.TARGET_NODES[count.index % length(var.TARGET_NODES)]
-
-  vmid     = "1900${count.index + 1}"
-  clone    = var.template
-  agent    = 1
-  os_type  = "cloud-init"
-  cores    = var.docker_worker_cpu_count
-  sockets  = 1
-  cpu      = "host"
-  memory   = var.docker_worker_memory
-  scsihw   = "virtio-scsi-pci"
-  bootdisk = "scsi0"
+  onboot      = var.run_on_boot
+  vmid        = "1900${count.index + 1}"
+  clone       = var.template
+  agent       = 1
+  os_type     = "cloud-init"
+  cores       = var.docker_worker_cpu_count
+  sockets     = 1
+  cpu         = "host"
+  memory      = var.docker_worker_memory
+  scsihw      = "virtio-scsi-pci"
+  bootdisk    = "scsi0"
 
   disk {
     slot     = 0

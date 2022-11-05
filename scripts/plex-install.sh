@@ -8,7 +8,7 @@ curl https://downloads.plex.tv/plex-keys/PlexSign.key | apt-key add -
 echo deb https://downloads.plex.tv/repo/deb public main | tee /etc/apt/sources.list.d/plexmediaserver.list
 
 apt update
-ln -s $gluster_volume_dir/$gluster_volume_config/plex/ /var/lib/plexmediaserver/
+ln -s $gluster_volume_dir/$gluster_volume_config/plex /var/lib/plexmediaserver
 apt install -y plexmediaserver
 
 ufw allow ssh   
