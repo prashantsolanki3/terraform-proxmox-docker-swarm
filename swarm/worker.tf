@@ -1,3 +1,4 @@
+# WIP
 resource "proxmox_vm_qemu" "docker_worker" {
   count       = var.docker_worker_count
   name        = "${var.docker_worker_hostname}${count.index + 1}"
@@ -85,7 +86,7 @@ resource "proxmox_vm_qemu" "docker_worker" {
 
   # Copy cleanup.sh
   provisioner "local-exec" {
-    command = "rsync -e 'ssh -o stricthostkeychecking=no' ./scripts/cleanup.sh ${var.admin_user}@${var.docker_manager_ipv4_range}${count.index + var.docker_manager_range_offset}:/tmp/cleanup.sh"
+    command = "rsync -e 'ssh -o stricthostkeychecking=no' ./scripts/cleanup.sh ${var.admin_user}@${var.docker_worker_ipv4_range}${count.index + var.docker_worker_range_offset}:/tmp/cleanup.sh"
   }
 
   # CHMOD firstboot.sh and execute

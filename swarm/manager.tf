@@ -28,7 +28,7 @@ resource "proxmox_vm_qemu" "docker_manager" {
     slot     = 1
     size     = count.index == 0 ? var.docker_manager_disk_size_secondary : "1G"
     type     = "scsi"
-    storage  = "fast"
+    storage  = ["fast", "local-lvm"][count.index % length(var.TARGET_NODES)]
     iothread = 1
   }
 
@@ -102,6 +102,16 @@ resource "proxmox_vm_qemu" "docker_manager" {
     command = "rsync -e 'ssh -o stricthostkeychecking=no' ./scripts/cleanup.sh ${var.admin_user}@${var.docker_manager_ipv4_range}${count.index + var.docker_manager_range_offset}:/tmp/cleanup.sh"
   }
 
+  # Copy Cloudflared Tunnel Script 
+  provisioner "local-exec" {
+    command = "rsync -e 'ssh -o stricthostkeychecking=no' ./scripts/docker-service-run.sh ${var.admin_user}@${var.docker_manager_ipv4_range}${count.index + var.docker_manager_range_offset}:/tmp/docker-service-run.sh"
+  }
+
+  # Copy Portainer Stack 
+  provisioner "local-exec" {
+    command = "rsync -e 'ssh -o stricthostkeychecking=no' ./scripts/docker-compose.yml ${var.admin_user}@${var.docker_manager_ipv4_range}${count.index + var.docker_manager_range_offset}:/tmp/docker-compose.yml"
+  }
+
   # CHMOD firstboot.sh and execute
   provisioner "remote-exec" {
     inline = [
@@ -110,6 +120,7 @@ resource "proxmox_vm_qemu" "docker_manager" {
       "chmod +x /tmp/nvidia-driver-install.sh",
       "chmod +x /tmp/plex-install.sh",
       "chmod +x /tmp/cleanup.sh",
+      "chmod +x /tmp/docker-service-run.sh",
       "/tmp/run-as-sudo.sh /tmp/firstboot.sh"
     ]
   }
@@ -166,7 +177,7 @@ resource "proxmox_vm_qemu" "docker_manager" {
   provisioner "remote-exec" {
     inline = count.index == 0 ? [
       "echo \"Copied Join Tokens\""
-    ] : ["sleep 20"]
+    ] : ["sleep 30"]
   }
 
   # Join Docker Swarm
@@ -176,6 +187,14 @@ resource "proxmox_vm_qemu" "docker_manager" {
       "chmod +x /tmp/docker-swarm-manager-join-token",
       "/tmp/docker-swarm-manager-join-token"
     ] : ["echo \"count: ${var.docker_manager_count}\""]
+  }
+
+  # Create Docker Services
+  provisioner "remote-exec" {
+    inline = count.index == 0 ? [
+      "/bin/bash -x /tmp/docker-service-run.sh 2>&1 | tee /tmp/docker-service-run.sh.log",
+      "echo \"Essential Docker Services Installed\""
+    ] : ["echo \"Services not installed on Manager > 1\""]
   }
 
   # Install NVIDIA DRIVERS on Manager-1
@@ -192,6 +211,13 @@ resource "proxmox_vm_qemu" "docker_manager" {
       "/tmp/run-as-sudo.sh /tmp/plex-install.sh",
       "echo \"Plex Server Installed\""
     ] : ["echo \"Plex Server Not Installed\""]
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "/bin/bash -x /tmp/cleanup.sh 2>&1 | tee /tmp/cleanup.log",
+      "echo \"Instance sanitized!\""
+    ]
   }
 
 }

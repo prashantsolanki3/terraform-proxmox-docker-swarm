@@ -1,11 +1,14 @@
-rm -rf /tmp/docker-swarm-manager-join-token
-rm -rf /tmp/docker-swarm-worker-join-token
-rm -rf /tmp/.temp-manager
-rm -rf /tmp/.temp-worker
-rm -rf /tmp/.env
-rm -rf /tmp/firstboot.sh
-rm -rf /tmp/nvidia-driver-install.sh
-rm -rf /tmp/plex-install.sh
-rm -rf /tmp/run-as-sudo.sh
-rm -rf /tmp/cleanup.sh
+#!/bin/bash
+rm -rfv /tmp/docker-swarm-manager-join-token
+rm -rfv /tmp/docker-swarm-worker-join-token
+rm -rfv /tmp/.temp-manager
+rm -rfv /tmp/.temp-worker
+rm -rfv /tmp/.env
+rm -rfv /tmp/firstboot.sh
+rm -rfv /tmp/nvidia-driver-install.sh
+rm -rfv /tmp/plex-install.sh
+rm -rfv /tmp/run-as-sudo.sh
+rm -rfv /tmp/cleanup.sh
+rm -rfv /tmp/docker-service-run.sh
+rm -rfv /tmp/docker-compose.yml
 exit 0

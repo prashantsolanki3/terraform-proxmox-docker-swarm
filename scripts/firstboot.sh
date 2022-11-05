@@ -4,11 +4,14 @@ set -o allexport
 source /tmp/.env
 set +o allexport
 
-# printenv | less 2>&1 | tee  debug.env.output
+mkdir -p /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+# sudo chmod a+r /usr/share/keyrings/docker-archive-keyring.gpg
+
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
 
 apt-get update -y
-sleep 20
-apt-get install -y ca-certificates curl gnupg lsb-release cifs-utils glusterfs-client
+apt-get -o DPkg::Lock::Timeout=60 install -y ca-certificates curl gnupg lsb-release cifs-utils glusterfs-client docker-ce docker-ce-cli containerd.io docker-compose docker-compose-plugin
 
 mkdir -p $shared_dir
 chown ubuntu:ubuntu -R $shared_dir
@@ -37,21 +40,18 @@ echo "$share_ip:/$gluster_volume_config $gluster_volume_dir/$gluster_volume_conf
 
 echo "$share_ip:/$gluster_volume_mariadb $gluster_volume_dir/$gluster_volume_mariadb glusterfs defaults,_netdev 0 0" >> /etc/fstab
 
-mkfs -t ext4 /dev/sdb
-mkdir -p /transcode
-chown ubuntu:ubuntu -R /transcode
-echo "/dev/sdb /transcode ext4 rw,relatime 0 2" >> /etc/fstab
+if [ -f /dev/sdb ] ;
+then 
+    mkfs -t ext4 /dev/sdb ;
+    mkdir -p /transcode ;
+    chown ubuntu:ubuntu -R /transcode ;
+    echo "/dev/sdb /transcode ext4 rw,relatime 0 2" >> /etc/fstab ;
+fi
+
 
 chown ubuntu:ubuntu -R /mnt/gluster_volumes
 
-mkdir -p /etc/apt/keyrings
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-# sudo chmod a+r /usr/share/keyrings/docker-archive-keyring.gpg
 
-echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
-
-apt-get update -y
-apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
 
 # su -c "useradd docker -s /bin/bash -m -g docker -G sudo"
 # su -c "useradd docker -s /bin/bash -m -g docker -G sudo"
@@ -60,6 +60,5 @@ usermod -aG docker ubuntu # 2>&1 | tee usermod-docker.output
 # echo "sudo usermod -aG docker $USER" 2>&1 | tee sudo-usermod-docker.output
 
 echo "ubuntu:$ubuntu_password" | sudo chpasswd # 2>&1 | tee chpasswd.output
-cat ./.env 2>&1 | tee env.output
 docker run hello-world 2>&1 | tee  hello-world.output
 mount -a 
