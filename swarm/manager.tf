@@ -107,9 +107,14 @@ resource "proxmox_vm_qemu" "docker_manager" {
     command = "rsync -e 'ssh -o stricthostkeychecking=no' ./scripts/docker-service-run.sh ${var.admin_user}@${var.docker_manager_ipv4_range}${count.index + var.docker_manager_range_offset}:/tmp/docker-service-run.sh"
   }
 
-  # Copy Portainer Stack 
+  # Copy Essential Stack 
   provisioner "local-exec" {
     command = "rsync -e 'ssh -o stricthostkeychecking=no' ./scripts/docker-compose.yml ${var.admin_user}@${var.docker_manager_ipv4_range}${count.index + var.docker_manager_range_offset}:/tmp/docker-compose.yml"
+  }
+
+  # Copy Cloudflared Tunnel 
+  provisioner "local-exec" {
+    command = "rsync -e 'ssh -o stricthostkeychecking=no' ./scripts/cloudflared-tunnel.sh ${var.admin_user}@${var.docker_manager_ipv4_range}${count.index + var.docker_manager_range_offset}:/tmp/cloudflared-tunnel.sh"
   }
 
   # CHMOD firstboot.sh and execute
@@ -121,6 +126,7 @@ resource "proxmox_vm_qemu" "docker_manager" {
       "chmod +x /tmp/plex-install.sh",
       "chmod +x /tmp/cleanup.sh",
       "chmod +x /tmp/docker-service-run.sh",
+      "chmod +x /tmp/cloudflared-tunnel.sh",
       "/tmp/run-as-sudo.sh /tmp/firstboot.sh"
     ]
   }
@@ -192,9 +198,17 @@ resource "proxmox_vm_qemu" "docker_manager" {
   # Create Docker Services
   provisioner "remote-exec" {
     inline = count.index == 0 ? [
-      "/bin/bash -x /tmp/docker-service-run.sh 2>&1 | tee /tmp/docker-service-run.sh.log",
+      "/tmp/docker-service-run.sh 2>&1 | tee /tmp/docker-service-run.sh.log",
       "echo \"Essential Docker Services Installed\""
     ] : ["echo \"Services not installed on Manager > 1\""]
+  }
+
+  # Create Docker Services
+  provisioner "remote-exec" {
+    inline = [
+      "/tmp/cloudflared-tunnel.sh 2>&1 | tee /tmp/cloudflared-tunnel.sh.log",
+      "echo \"Cloudflared Tunnel Service Installed\""
+    ]
   }
 
   # Install NVIDIA DRIVERS on Manager-1
