@@ -19,7 +19,13 @@ services:
     deploy:
       mode: replicated
       replicas: 1
-
+  flame:
+    image: pawelmalak/flame
+    container_name: flame
+    volumes:
+      - ${VOL_CONFIG}/flame:/app/data
+      - /var/run/docker.sock:/var/run/docker.sock
+    restart: ${RESTART_POLICY}
 networks:
   default:
     external:
