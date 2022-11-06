@@ -107,11 +107,6 @@ resource "proxmox_vm_qemu" "docker_manager" {
     command = "rsync -e 'ssh -o stricthostkeychecking=no' ./scripts/docker-service-run.sh ${var.admin_user}@${var.docker_manager_ipv4_range}${count.index + var.docker_manager_range_offset}:/tmp/docker-service-run.sh"
   }
 
-  # Copy Essential Stack 
-  provisioner "local-exec" {
-    command = "rsync -e 'ssh -o stricthostkeychecking=no' ./scripts/docker-compose.yml ${var.admin_user}@${var.docker_manager_ipv4_range}${count.index + var.docker_manager_range_offset}:/tmp/docker-compose.yml"
-  }
-
   # Copy Cloudflared Tunnel 
   provisioner "local-exec" {
     command = "rsync -e 'ssh -o stricthostkeychecking=no' ./scripts/cloudflared-tunnel.sh ${var.admin_user}@${var.docker_manager_ipv4_range}${count.index + var.docker_manager_range_offset}:/tmp/cloudflared-tunnel.sh"

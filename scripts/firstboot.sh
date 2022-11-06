@@ -62,3 +62,6 @@ usermod -aG docker ubuntu # 2>&1 | tee usermod-docker.output
 echo "ubuntu:$ubuntu_password" | sudo chpasswd # 2>&1 | tee chpasswd.output
 docker run hello-world 2>&1 | tee  hello-world.output
 mount -a 
+
+# Clone repo
+git clone https://github.com/prashantsolanki3/docker-california.git /tmp/docker-california

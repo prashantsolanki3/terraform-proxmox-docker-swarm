@@ -14,5 +14,6 @@ docker network create -d overlay --attachable db
 #     cloudflare/cloudflared:latest \
 #         --no-autoupdate run \
 #         --token $cloudflared_token
-cd /tmp
+
+cd /tmp/docker-california/essentials
 docker stack deploy --compose-file <(docker-compose config) essentials
