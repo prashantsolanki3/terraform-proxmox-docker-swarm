@@ -1,13 +1,21 @@
+## Table of Contents
+  - [Docker Swarm Terraform](#docker-swarm-terraform)
+  - [Features](#features)
+  - [Preparation](#preparation)
+  - [Running the Module](#running-the-module)
+    - [Network Config](#network-config)
+    - [Generate Ansible Inventory](#generate-ansible-inventory)
+
 # Docker Swarm Terraform
 
-This modules creates a docker swarm in Proxmox.
+Deploy a docker swarm in Proxmox.
 
 ## Features
 
 - Creates VMs for Both Docker Manager and Workers using template
 - Initialises the swarm manager and registers additional managers and worker VMs
 - Scale the swarm vertically or horizontally as required
-- TODO: Shared Storage in all Nodes
+- Shared Storage in all Nodes
 
 Note: It can be run on any machine with access to Proxmox and Terraform Installed.
 
@@ -79,7 +87,11 @@ docker_manager_range_offset=0
 docker_worker_range_offset=5
 ```
 
+### Generate Ansible Inventory
 
+Ansible inventory is created in `ansible/inventory` upon completion of the terraform deployment is complete.
+
+You can manually configure and run any Ansible playbooks.
 <!-- ## Ansible
 
 Run Playboon on the specified inventory
